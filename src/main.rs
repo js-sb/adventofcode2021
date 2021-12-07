@@ -1,7 +1,7 @@
 extern crate regex;
 
 use std::cmp::{max, min};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 // use regex::Regex;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
@@ -322,25 +322,73 @@ fn main() {
     }
 
 
-    println!("==== Day 5 ====");
+    println!("==== Day 6 ====");
     {
         let fishies =
-            // BufReader::new(File::open("input/day6.txt")
-            BufReader::new(File::open("input/example.txt")
+            BufReader::new(File::open("input/day6.txt")
+                // BufReader::new(File::open("input/example.txt")
+                .expect("unable to open file"))
+                .lines().nth(0).expect("line missing").expect("line error").split(",")
+                .map(|s| s.parse::<i64>().expect("parse error"))
+                .collect::<VecDeque<_>>();
+
+        let mut lantern_fish:VecDeque<i64> = VecDeque::from(vec![
+            fishies.clone().into_iter().filter(|d| *d == 0).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 1).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 2).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 3).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 4).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 5).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 6).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 7).count() as i64,
+            fishies.clone().into_iter().filter(|d| *d == 8).count() as i64]);
+
+        println!("--- Solution Part One ---");
+        for _ in 0..80 {
+            let reproductive_lantern_fish = lantern_fish.pop_front().expect("no entries");
+            lantern_fish[6] += reproductive_lantern_fish;
+            lantern_fish.push_back(reproductive_lantern_fish);
+
+        }
+        println!("{}", lantern_fish.clone().into_iter().sum::<i64>());
+
+        println!("--- Solution Part Two ---");
+        for _ in 80..256 {
+            let reproductive_lantern_fish = lantern_fish.pop_front().expect("no entries");
+            lantern_fish[6] += reproductive_lantern_fish;
+            lantern_fish.push_back(reproductive_lantern_fish);
+
+        }
+        println!("{}", lantern_fish.clone().into_iter().sum::<i64>());
+    }
+
+    println!("==== Day 7 ====");
+    {
+        let positions =
+            BufReader::new(File::open("input/day7.txt")
+                // BufReader::new(File::open("input/example.txt")
                 .expect("unable to open file"))
                 .lines().nth(0).expect("line missing").expect("line error").split(",")
                 .map(|s| s.parse::<i32>().expect("parse error"))
                 .collect::<Vec<_>>();
 
-        println!("{:?}", fishies);
-
-
-        // let mut lantern_fish = vec![];
+        let position_range = positions.clone().into_iter().min().expect("minimum not found")
+            ..=positions.clone().into_iter().max().expect("maximum not found");
 
         println!("--- Solution Part One ---");
-        {}
+        let fuel_consumptions = position_range.clone().into_iter()
+            .map(|goal| positions.clone().into_iter()
+                .fold(0, |f, p| f + (p - goal).abs()))
+            .collect::<Vec<i32>>();
 
+        println!("{:?}",fuel_consumptions.into_iter().min().expect("minimum not found"));
         println!("--- Solution Part Two ---");
-        {}
+        let fuel_consumptions = position_range.clone().into_iter()
+            .map(|goal| positions.clone().into_iter()
+                .fold(0, |f, p| f + ((p - goal).abs() + 1)*(p - goal).abs()/2))
+            .collect::<Vec<i32>>();
+
+        println!("{:?}",fuel_consumptions.into_iter().min().expect("minimum not found"));
+
     }
 }
