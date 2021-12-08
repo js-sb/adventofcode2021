@@ -1,15 +1,16 @@
 mod utils;
-// mod day1;
-// mod day2;
-// mod day3;
-// mod day4;
-// mod day5;
-// mod day6;
-// mod day7;
+mod day1;
+mod day2;
+mod day3;
+mod day4;
+mod day5;
+mod day6;
+mod day7;
 mod day8;
+mod day9;
 
 fn main() {
-    /*
+
     println!("==== DAY1 ====");
     println!("Solution Part One\t    {}",day1::part_one("input/day1.txt"));
     println!("Solution Part Two\t    {}",day1::part_two("input/day1.txt"));
@@ -37,9 +38,12 @@ fn main() {
     println!("==== DAY7 ====");
     println!("Solution Part One\t    {}",day7::part_one("input/day7.txt"));
     println!("Solution Part Two\t    {}",day7::part_two("input/day7.txt"));
-*/
+
     println!("==== DAY8 ====");
-    // println!("Solution Part One\t    {}",day8::part_one("input/example.txt"));
     println!("Solution Part One\t    {}",day8::part_one("input/day8.txt"));
-    println!("Solution Part Two\t    {}",day8::part_two("input/day8.txt"));
+    println!("Solution Part Two\t    {}",day8::part_two("input/example.txt")); // TODO optimize, super slow on real input
+
+    println!("==== DAY9 ====");
+    println!("Solution Part One\t    {}",day9::part_one("input/day9.txt"));
+    println!("Solution Part Two\t    {}",day9::part_two("input/day9.txt"));
 }

@@ -1,87 +1,91 @@
-use std::collections::{HashMap, HashSet};
+use itertools::Itertools;
 use crate::utils::read_lines;
-
-fn could_be_zero() -> bool{
-
-    false
-}
 
 pub fn part_one(filename: &str) -> i32 {
     let lines = read_lines(filename);
     let line_split = lines
         .map(|l| l.expect("unable to read line")
-        .split(" | ")
-            .map(|sl | sl.to_string())
+            .split(" | ")
+            .map(|sl| sl.to_string())
+            .collect::<Vec<String>>())
+        .collect::<Vec<Vec<String>>>();
+    line_split.into_iter().fold(0, |num: i32, ls| num + ls[1].split(" ")
+        .fold(0, |n: i32, s|
+            if s.len() == 2 || s.len() == 3 || s.len() == 4 || s.len() == 7 { n + 1 } else { n }))
+}
+
+pub fn part_two(filename: &str) -> i64 {
+    let lines = read_lines(filename);
+    let line_split = lines
+        .map(|l| l.expect("unable to read line")
+            .split(" | ")
+            .map(|sl| sl.to_string())
             .collect::<Vec<String>>())
         .collect::<Vec<Vec<String>>>();
 
-    let mut dictionary:HashMap<char, HashSet<char>> = HashMap::new();
-    dictionary.insert('a', "ABCDEFG".chars().collect());
-    dictionary.insert('b', "ABCDEFG".chars().collect());
-    dictionary.insert('c', "ABCDEFG".chars().collect());
-    dictionary.insert('d', "ABCDEFG".chars().collect());
-    dictionary.insert('e', "ABCDEFG".chars().collect());
-    dictionary.insert('f', "ABCDEFG".chars().collect());
-    dictionary.insert('g', "ABCDEFG".chars().collect());
-
-
-    let mut seven_segment: HashMap<i32, HashSet<char>> = HashMap::new();
-    seven_segment.insert(0, "ABCEFG".chars().collect());
-    seven_segment.insert(1, "CF".chars().collect());
-    seven_segment.insert(2, "ACDEG".chars().collect());
-    seven_segment.insert(3, "ACDFG".chars().collect());
-    seven_segment.insert(4, "BCDF".chars().collect());
-    seven_segment.insert(5, "ABDFG".chars().collect());
-    seven_segment.insert(6, "ABDEFG".chars().collect());
-    seven_segment.insert(7, "ACF".chars().collect());
-    seven_segment.insert(8, "ABCDEFG".chars().collect());
-    seven_segment.insert(9, "ABCDFG".chars().collect());
-
-
-    for ls in line_split.clone() {
-        let inputs = ls[0].split(" ")
-            .map(|d| d.to_string())
-            .collect::<Vec<String>>();
-
-        let mut dict = dictionary.clone();
-        for _ in inputs.clone().into_iter() {
-            for input in inputs.clone().into_iter() {
-                // let input = inputs.pop().expect("");
-                let input_set: HashSet<char> = input.chars()
-                    .fold(HashSet::new(), |mut s, c|
-                        {
-                            s.extend(dict.get(&c).expect("no entry"));
-                            s
-                        });
-
-                let mut number_set: HashSet<char> = HashSet::new();
-                for number in seven_segment.values() {
-                    if number.len() == input.len()
-                        && input_set.is_superset(number) {
-                        // println!("input {:?}: {:?},number {:?}: {:?}", input.len(), input_set, number.len(), number);
-                        number_set.extend(number);
-                    }
-                }
-
-                // println!("{:?}", number_set);
-                for c in input.chars() {
-                    let solution: HashSet<char> = dict.get(&c).expect("no entry")
-                        .iter().cloned().collect::<HashSet<char>>()
-                        .intersection(&number_set).cloned().collect::<HashSet<char>>();
-                    *dict.get_mut(&c).expect("no entry") = solution;
-                }
-                println!("{:?}", dict);
-                println!();
+        fn translate_to_number(segment: &str) -> Option<i32> {
+            match segment {
+                "ABCEFG" => Some(0),
+                "CF" => Some(1),
+                "ACDEG" => Some(2),
+                "ACDFG" => Some(3),
+                "BCDF" => Some(4),
+                "ABDFG" => Some(5),
+                "ABDEFG" => Some(6),
+                "ACF" => Some(7),
+                "ABCDEFG" => Some(8),
+                "ABCDFG" => Some(9),
+                _ => None
             }
         }
 
+        let mut result:i64 = 0;
+        for ls in line_split.clone() {
+            'perm_loop: for permutation in "ABCDEFG".chars()
+                .collect::<Vec<char>>().into_iter().permutations(7) {
+                let segments = ls[0].split(" ")
+                    .map(|d| {
+                        let mut segment = d.chars().collect::<Vec<char>>();
+                        segment = segment.into_iter().map(|c| match c {
+                            'a' => permutation[0],
+                            'b' => permutation[1],
+                            'c' => permutation[2],
+                            'd' => permutation[3],
+                            'e' => permutation[4],
+                            'f' => permutation[5],
+                            'g' => permutation[6],
+                            _ => panic!()
+                        }).collect();
+                        segment.sort_by_key(|x| *x);
+                        segment.into_iter().collect::<String>()
+                    }).collect::<Vec<String>>();
 
-        break;
-    }
-    0
-}
+                for s in segments.iter() {
+                    if None == translate_to_number(s) {
+                        continue 'perm_loop;
+                    }
+                }
 
-pub fn part_two(filename:&str) -> i32 {
-    let lines = read_lines(filename);
-    0
+                let result_segments = ls[1].split(" ")
+                    .map(|d| {
+                        let mut segment = d.chars().collect::<Vec<char>>();
+                        segment = segment.into_iter().map(|c| match c {
+                            'a' => permutation[0],
+                            'b' => permutation[1],
+                            'c' => permutation[2],
+                            'd' => permutation[3],
+                            'e' => permutation[4],
+                            'f' => permutation[5],
+                            'g' => permutation[6],
+                            _ => panic!()
+                        }).collect();
+                        segment.sort_by_key(|x| *x);
+                        translate_to_number(&segment.into_iter().collect::<String>())
+                            .expect("not a valid digit")
+                    }).collect::<Vec<i32>>();
+                    result += result_segments.into_iter()
+                        .fold(0, |num:i64, digit| 10 * num + digit as i64);
+            }
+        }
+        result
 }
