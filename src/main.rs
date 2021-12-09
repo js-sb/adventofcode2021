@@ -41,7 +41,7 @@ fn main() {
 
     println!("==== DAY8 ====");
     println!("Solution Part One\t    {}",day8::part_one("input/day8.txt"));
-    println!("Solution Part Two\t    {}",day8::part_two("input/example.txt")); // TODO optimize, super slow on real input
+    //println!("Solution Part Two\t    {}",day8::part_two("input/day8.txt")); // TODO optimize, super slow
 
     println!("==== DAY9 ====");
     println!("Solution Part One\t    {}",day9::part_one("input/day9.txt"));
