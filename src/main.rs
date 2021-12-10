@@ -8,6 +8,7 @@ mod day6;
 mod day7;
 mod day8;
 mod day9;
+mod day10;
 
 fn main() {
 
@@ -46,4 +47,8 @@ fn main() {
     println!("==== DAY9 ====");
     println!("Solution Part One\t    {}",day9::part_one("input/day9.txt"));
     println!("Solution Part Two\t    {}",day9::part_two("input/day9.txt"));
+
+    println!("==== DAY10 ====");
+    println!("Solution Part One\t    {}",day10::part_one("input/day10.txt"));
+    println!("Solution Part Two\t    {}",day10::part_two("input/day10.txt"));
 }

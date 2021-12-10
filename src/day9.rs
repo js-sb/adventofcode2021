@@ -1,9 +1,8 @@
-use itertools::any;
 use crate::utils::read_lines;
 
 pub fn part_one(filename: &str) -> i32 {
     let lines = read_lines(filename);
-    let mut mat = lines.into_iter()
+    let mat = lines.into_iter()
         .map(|line| line.expect("unable to read line").chars()
             .map(|c| c.to_string().parse::<i32>().expect("unable to parse")).collect::<Vec<i32>>())
         .collect::<Vec<Vec<i32>>>();
@@ -37,7 +36,7 @@ pub fn part_one(filename: &str) -> i32 {
 
 pub fn part_two(filename: &str) -> i32 {
     let lines = read_lines(filename);
-    let mut mat = lines.into_iter()
+    let mat = lines.into_iter()
         .map(|line| line.expect("unable to read line").chars()
             .map(|c| c.to_string().parse::<i32>().expect("unable to parse")).collect::<Vec<i32>>())
         .collect::<Vec<Vec<i32>>>();
