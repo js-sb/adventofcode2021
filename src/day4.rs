@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, Lines};
+use std::io::{BufRead, BufReader, Lines};
 use crate::utils::read_lines;
 
 fn check_bingo(draw: &[i32], board: &[i32]) -> (bool, Vec<i32>) {
@@ -74,7 +74,64 @@ pub fn part_one(filename: &str) -> i32 {
 
     winner_config.0.into_iter().sum::<i32>() * winner_config.1
 }
+/*
+pub fn part_one(filename: &str) -> i32 {
+    BufReader::new(File::open(filename)
+        .expect("unable to open file"))
+        .lines()
+        .enumerate()
+        .into_iter()
+        .fold((vec![],vec![],vec![]),|(b,c,d),t|
+            match t {
+                (0, _) => (b, c, t.1.unwrap().trim().split(",").map(|s| s.parse::<i32>().unwrap()).collect::<Vec<i32>>()),
+                (1, _) => t,
+                _ => match t.1.unwrap().trim().is_empty() {
+                    true => (b, c, d),
+                    _ => (b.push(1),c,d)
+                }
+            }
+        );
+    0
+    /*
+            if i == 0 {
+                draw = line
+                    .trim()
+                    .split(",")
+                    .map(|s| s.parse::<i32>().expect("unable to parse number"))
+                    .collect::<Vec<i32>>();
+            } else if i == 1 {
 
+            } else if line.trim().is_empty() {
+                boards.push(current_board.clone());
+                current_board.clear();
+            } else {
+                current_board.append(line
+                    .trim()
+                    .split_whitespace()
+                    .map(|n| n.parse::<i32>().expect("unable to parse number"))
+                    .collect::<Vec<i32>>().as_mut())
+            }
+        }
+        boards.push(current_board.clone());
+        (draw, boards)
+        let (draw, boards) = parse_boards(lines);
+
+
+        let mut winner_config: (Vec<i32>, i32) = (vec![], 0);
+        (0..draw.len()).try_fold()
+        'draw_loop: for i in 0..draw.len() {
+            for board in boards.iter() {
+                let (bingo, w_b) = check_bingo(&draw[0..=i], board);
+                if bingo {
+                    winner_config = (w_b, draw[i]);
+                    break 'draw_loop;
+                }
+            }
+        }
+
+        winner_config.0.into_iter().sum::<i32>() * winner_config.1
+    */
+}*/
 pub fn part_two(filename: &str) -> i32 {
     let lines = read_lines(filename);
     let (draw, mut boards) = parse_boards(lines);
