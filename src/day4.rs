@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Lines};
+use std::io::{BufReader, Lines};
 use crate::utils::read_lines;
 
 fn check_bingo(draw: &[i32], board: &[i32]) -> (bool, Vec<i32>) {
