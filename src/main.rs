@@ -12,6 +12,8 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
+mod day15;
 
 fn main() {
     println!("==== DAY1 ====");
@@ -65,4 +67,12 @@ fn main() {
     println!("==== DAY13 ====");
     println!("Solution Part One\t    {}", day13::part_one("input/day13.txt"));
     println!("Solution Part Two\t    {}", day13::part_two("input/day13.txt"));
+
+    println!("==== DAY14 ====");
+    println!("Solution Part One\t    {}", day14::part_one("input/day14.txt"));
+    println!("Solution Part Two\t    {}", day14::part_two("input/day14.txt"));
+
+    println!("==== DAY15 ====");
+    println!("Solution Part One\t    {}", day15::part_one("input/day15.txt"));
+    println!("Solution Part Two\t    {}", day15::part_two("input/day15.txt"));
 }
