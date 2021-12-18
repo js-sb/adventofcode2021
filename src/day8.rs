@@ -14,7 +14,7 @@ pub fn part_one(filename: &str) -> i32 {
             if s.len() == 2 || s.len() == 3 || s.len() == 4 || s.len() == 7 { n + 1 } else { n }))
 }
 
-pub fn part_two(filename: &str) -> i64 {
+pub fn _part_two(filename: &str) -> i64 {
     let lines = read_lines(filename);
     let line_split = lines
         .map(|l| l.expect("unable to read line")

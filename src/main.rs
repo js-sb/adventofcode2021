@@ -74,5 +74,5 @@ fn main() {
 
     println!("==== DAY15 ====");
     println!("Solution Part One\t    {}", day15::part_one("input/day15.txt"));
-    println!("Solution Part Two\t    {}", day15::part_two("input/day15.txt"));
+    // println!("Solution Part Two\t    {}", day15::_part_two("input/day15.txt")); // pretty slow
 }
