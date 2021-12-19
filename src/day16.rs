@@ -35,7 +35,7 @@ fn slice_to_num(slice: &[bool]) -> u64 {
         .fold(0u64, |n, (i, b)| n + *b as u64 * 2u64.pow(i as u32))
 }
 
-fn format_slice(slice: &[bool]) -> String {
+fn _format_slice(slice: &[bool]) -> String {
     format!("[{}]", slice.iter().format_with("", |b, f| f(&format_args!("{}", *b as i32))))
 }
 
@@ -79,9 +79,9 @@ fn parse_package(bit_stream: &[bool], break_after_n: Option<u64>) -> (Vec<Packag
 }
 
 fn parse_ids(bit_stream: &[bool]) -> (u64, u64, &[bool]) {
-    print!("{}{}",
-           format_slice(&bit_stream[0..3]),
-           format_slice(&bit_stream[3..6]));
+    // print!("{}{}",
+    //        format_slice(&bit_stream[0..3]),
+    //        format_slice(&bit_stream[3..6]));
 
     (slice_to_num(&bit_stream[0..3]), slice_to_num(&bit_stream[3..6]), &bit_stream[6..])
 }
@@ -90,7 +90,7 @@ fn parse_ids(bit_stream: &[bool]) -> (u64, u64, &[bool]) {
 fn parse_literal(bit_stream: &[bool]) -> (Content, &[bool]) {
     let mut indicator = bit_stream;
 
-    print!(" literal ");
+    // print!(" literal ");
 
     let mut data = vec![];
     while indicator[0] {
@@ -99,7 +99,7 @@ fn parse_literal(bit_stream: &[bool]) -> (Content, &[bool]) {
     }
     data.append(&mut indicator[1..5].iter().cloned().collect());
 
-    println!("\"{}\" = {}", format_slice(&*data), slice_to_num(&data));
+    // println!("\"{}\" = {}", format_slice(&*data), slice_to_num(&data));
 
     (Content::new_number(slice_to_num(&*data)), &indicator[5..])
 }
@@ -111,8 +111,8 @@ fn parse_operator(bit_stream: &[bool]) -> (Content, &[bool]) {
 
     if bit_stream[0] { // break on package number
 
-        print!(" operator 1 ");
-        println!("{}", format_slice(stream));
+        // print!(" operator 1 ");
+        // println!("{}", format_slice(stream));
 
         let package_count = slice_to_num(&stream[1..12]);
         stream = &stream[12..];
@@ -122,8 +122,8 @@ fn parse_operator(bit_stream: &[bool]) -> (Content, &[bool]) {
         content = Content::new_packets(packets);
     } else { // break on bit count number
 
-        print!(" operator 0 ");
-        println!("{}", format_slice(stream));
+        // print!(" operator 0 ");
+        // println!("{}", format_slice(stream));
 
         let bit_count = slice_to_num(&stream[1..16]);
         stream = &stream[16..];
@@ -151,7 +151,7 @@ pub fn part_one(filename: &str) -> u64 {
 
 
     let (packages, _) = parse_package(&bit_stream, None);
-    println!("\n\n{:?}", packages);
+    // println!("\n\n{:?}", packages);
 
 
     fn sum_versions(ps: Vec<Package>) -> u64 {
@@ -183,7 +183,7 @@ pub fn part_two(filename: &str) -> u64 {
 
 
     let (packages, _) = parse_package(&bit_stream, None);
-    println!("\n\n{:?}", packages);
+    // println!("\n\n{:?}", packages);
 
 
     fn execute_operations(ps: Vec<Package>, op: u64) -> u64 {
@@ -195,7 +195,7 @@ pub fn part_two(filename: &str) -> u64 {
         // ID 6  less than packets    - 1 if the value of the first sub-packet is less than the value of the second sub-packet; otherwise, their value is 0.
         // ID 7  equal to packets     - 1 if the value of the first sub-packet is equal to the value of the second sub-packet; otherwise, their value is 0.
 
-        println!("{}, {:?}", op, ps);
+        // println!("{}, {:?}", op, ps);
         match op {
             0 => // sum
                 ps.iter()
