@@ -1,70 +1,96 @@
-use std::fmt::{Display, Formatter};
 use itertools::Itertools;
 use crate::utils::read_lines;
 
 #[derive(Debug, Clone)]
-struct Packet<'a> {
-    version: i32,
-    packet_type: i32,
-    bit_stream: &'a [bool],
+struct Package {
+    version: u64,
+    packet_type: u64,
+    content: Content,
 }
 
-impl<'a> Packet<'a> {
-    fn new(version: i32, packet_type: i32, bit_stream: &'a [bool]) -> Self {
-        Packet { version, packet_type, bit_stream }
+impl Package {
+    fn new(version: u64, packet_type: u64, content: Content) -> Self {
+        Package { version, packet_type, content }
     }
 }
 
-impl<'a> Display for Packet<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "v:{} ,t:{}\n{}\n", self.version, self.packet_type,
-               self.bit_stream.iter()
-                   .format_with("", |b, f| f(&format_args!("{}", *b as i32))))
+#[derive(Debug, Clone)]
+struct Content {
+    sub_packets: Option<Vec<Package>>,
+    number: Option<u64>,
+}
+
+impl Content {
+    fn new_packets(sub_packets: Vec<Package>) -> Self {
+        Content { sub_packets: Some(sub_packets), number: None }
+    }
+    fn new_number(number: u64) -> Self {
+        Content { sub_packets: None, number: Some(number) }
     }
 }
 
-fn parse_stream(bit_stream: &[bool]) -> Vec<Packet> {
+
+fn slice_to_num(slice: &[bool]) -> u64 {
+    slice.iter().rev().enumerate()
+        .fold(0u64, |n, (i, b)| n + *b as u64 * 2u64.pow(i as u32))
+}
+
+fn format_slice(slice: &[bool]) -> String {
+    format!("[{}]", slice.iter().format_with("", |b, f| f(&format_args!("{}", *b as i32))))
+}
+
+
+fn parse_package(bit_stream: &[bool], break_after_n: Option<u64>) -> (Vec<Package>, &[bool]) {
+    let mut stream = bit_stream;
+    let mut packets: Vec<Package> = vec![];
+
+
+    for i in 0.. {
+        // break condition 0: only 0 digits left in stream
+        if stream.is_empty() || !stream.iter().any(|v| *v) {
+            break;
+        }
+
+        // break condition 1: read specified number of packages
+        if let Some(n) = break_after_n {
+            if i >= n {
+                break;
+            }
+        }
+
+        // read package header
+        let (version, package_type, slice) =
+            parse_ids(stream);
+
+        stream = slice; // move ahead in stream
+
+        // read package contents
+        let (content, slice) =
+            match package_type {
+                4 => parse_literal(stream),
+                _ => parse_operator(stream),
+            };
+
+        packets.push(Package::new(version, package_type, content));
+
+        stream = slice; // move ahead in stream
+    }
+    (packets, stream)
+}
+
+fn parse_ids(bit_stream: &[bool]) -> (u64, u64, &[bool]) {
+    print!("{}{}",
+           format_slice(&bit_stream[0..3]),
+           format_slice(&bit_stream[3..6]));
+
+    (slice_to_num(&bit_stream[0..3]), slice_to_num(&bit_stream[3..6]), &bit_stream[6..])
+}
+
+
+fn parse_literal(bit_stream: &[bool]) -> (Content, &[bool]) {
     let mut indicator = bit_stream;
-    let mut packets = vec![];
 
-    let info = read_ids(bit_stream);
-    let new_packet = Packet::new(info.0, info.1, info.2);
-    packets.push(new_packet);
-    let mut sub_package = parse_packet(info);
-    packets.append(&mut sub_package.0);
-    indicator = sub_package.1;
-
-    packets
-}
-
-fn read_ids(bit_stream: &[bool]) -> (i32, i32, &[bool]) {
-    print!("[{}{}{}][{}{}{}]",
-           bit_stream[0] as i32,
-           bit_stream[1] as i32,
-           bit_stream[2] as i32,
-           bit_stream[3] as i32,
-           bit_stream[4] as i32,
-           bit_stream[5] as i32);
-    (
-        bit_stream[0] as i32 * 4 + bit_stream[1] as i32 * 2 + bit_stream[2] as i32,
-        bit_stream[3] as i32 * 4 + bit_stream[4] as i32 * 2 + bit_stream[5] as i32,
-        &bit_stream[6..]
-    )
-}
-
-fn parse_packet((packet_version, packet_type, bit_stream): (i32, i32, &[bool])) -> (Vec<Packet>, &[bool]) {
-    print!("<");
-    let ret =
-        match packet_type {
-            4 => parse_literal(bit_stream),/* literal value */
-            _ => parse_operator(bit_stream),
-        };
-    print!(">");
-    ret
-}
-
-fn parse_literal(bit_stream: &[bool]) -> (Vec<Packet>, &[bool]) {
-    let mut indicator = bit_stream;
+    print!(" literal ");
 
     let mut data = vec![];
     while indicator[0] {
@@ -73,76 +99,45 @@ fn parse_literal(bit_stream: &[bool]) -> (Vec<Packet>, &[bool]) {
     }
     data.append(&mut indicator[1..5].iter().cloned().collect());
 
-    print!("\"{}\"",data.iter()
-        .format_with("", |b, f| f(&format_args!("{}", *b as i32))));
+    println!("\"{}\" = {}", format_slice(&*data), slice_to_num(&data));
 
-    (vec![], &indicator[5..])
+    (Content::new_number(slice_to_num(&*data)), &indicator[5..])
 }
 
-fn parse_operator(bit_stream: &[bool]) -> (Vec<Packet>, &[bool]) {
-    let mut data: Vec<&[bool]> = vec![];
-    let mut indicator = bit_stream;
-    print!("{{{}}}",bit_stream[0] as i32);
-    if bit_stream[0] {
-        let n_packages =
-            (bit_stream[1] as i32 * 1024 +
-                bit_stream[2] as i32 * 512 +
-                bit_stream[3] as i32 * 256 +
-                bit_stream[4] as i32 * 128 +
-                bit_stream[5] as i32 * 64 +
-                bit_stream[6] as i32 * 32 +
-                bit_stream[7] as i32 * 16 +
-                bit_stream[8] as i32 * 8 +
-                bit_stream[9] as i32 * 4 +
-                bit_stream[10] as i32 * 2 +
-                bit_stream[11] as i32) as usize;
+fn parse_operator(bit_stream: &[bool]) -> (Content, &[bool]) {
+    let mut stream = bit_stream;
 
-        print!("## {:?} || {}:0b{1:b} ##)", n_packages, bit_stream.len());
-        print!("({} = {})", bit_stream[1..12].iter()
-            .format_with("", |b, f| f(&format_args!("{}", *b as i32))),
-            n_packages);
-        indicator = &bit_stream[12..];
-        for i_packet in 0..n_packages {
-            data.push(&indicator[11 * i_packet..11 * (i_packet + 1)])
-        }
-    } else {
-        let bit_size =
-            (bit_stream[1] as i32 * 16384 +
-                bit_stream[2] as i32 * 8192 +
-                bit_stream[3] as i32 * 4096 +
-                bit_stream[4] as i32 * 2048 +
-                bit_stream[5] as i32 * 1024 +
-                bit_stream[6] as i32 * 512 +
-                bit_stream[7] as i32 * 256 +
-                bit_stream[8] as i32 * 128 +
-                bit_stream[9] as i32 * 64 +
-                bit_stream[10] as i32 * 32 +
-                bit_stream[11] as i32 * 16 +
-                bit_stream[12] as i32 * 8 +
-                bit_stream[13] as i32 * 4 +
-                bit_stream[14] as i32 * 2 +
-                bit_stream[15] as i32) as usize;
+    let content;
 
-        print!("({} = {})", bit_stream[1..16].iter()
-            .format_with("", |b, f| f(&format_args!("{}", *b as i32))),
-            bit_size);
+    if bit_stream[0] { // break on package number
 
-        indicator = &bit_stream[16..];
-        while indicator[0] {
-            data.push(&indicator[0..bit_size]);
-            indicator = &indicator[bit_size..];
-        }
+        print!(" operator 1 ");
+        println!("{}", format_slice(stream));
+
+        let package_count = slice_to_num(&stream[1..12]);
+        stream = &stream[12..];
+
+        let (packets, slice) = parse_package(stream, Some(package_count));
+        stream = slice;
+        content = Content::new_packets(packets);
+    } else { // break on bit count number
+
+        print!(" operator 0 ");
+        println!("{}", format_slice(stream));
+
+        let bit_count = slice_to_num(&stream[1..16]);
+        stream = &stream[16..];
+
+        let (packets, _) = parse_package(&stream[..bit_count as usize], None);
+        stream = &stream[bit_count as usize..];
+        content = Content::new_packets(packets);
     }
 
-    let mut packets = vec![];
-    for p in data {
-        packets.append(&mut parse_stream(p));
-    }
 
-    (packets, indicator)
+    (content, stream)
 }
 
-pub fn part_one(filename: &str) -> i32 {
+pub fn part_one(filename: &str) -> u64 {
     let lines = read_lines(filename);
     let bit_stream = lines.into_iter().nth(0).unwrap().unwrap().chars()
         .fold(vec![], |mut bit_stream, hex_digit| {
@@ -154,22 +149,21 @@ pub fn part_one(filename: &str) -> i32 {
             bit_stream
         });
 
-    let mut indicator: &[bool] = &bit_stream;
 
-    println!("{}", bit_stream.iter()
-        .format_with("", |b, f| f(&format_args!("{}", *b as i32))));
+    let (packages, _) = parse_package(&bit_stream, None);
+    println!("\n\n{:?}", packages);
 
-    let mut version_sum = 0;
-    let packet = parse_stream(indicator);
-    println!();
-    // for p in packet {
-    //     println!("{}", p);
-    // }
 
-    version_sum
-}
+    fn sum_versions (ps:Vec<Package>) -> u64 {
+        let mut v = 0;
+        for p in ps {
+            v += p.version;
+            if let Some(s) = p.content.sub_packets {
+                v += sum_versions(s);
+            }
+        }
+        v
+    }
 
-pub fn part_two(filename: &str) -> i32 {
-    let lines = read_lines(filename);
-    0
+    sum_versions(packages)
 }
