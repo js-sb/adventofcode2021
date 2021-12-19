@@ -154,7 +154,7 @@ pub fn part_one(filename: &str) -> u64 {
     println!("\n\n{:?}", packages);
 
 
-    fn sum_versions (ps:Vec<Package>) -> u64 {
+    fn sum_versions(ps: Vec<Package>) -> u64 {
         let mut v = 0;
         for p in ps {
             v += p.version;
@@ -166,4 +166,97 @@ pub fn part_one(filename: &str) -> u64 {
     }
 
     sum_versions(packages)
+}
+
+
+pub fn part_two(filename: &str) -> u64 {
+    let lines = read_lines(filename);
+    let bit_stream = lines.into_iter().nth(0).unwrap().unwrap().chars()
+        .fold(vec![], |mut bit_stream, hex_digit| {
+            let num = i32::from_str_radix(&hex_digit.to_string(), 16).unwrap();
+            bit_stream.push(num & 0b1000 != 0);
+            bit_stream.push(num & 0b0100 != 0);
+            bit_stream.push(num & 0b0010 != 0);
+            bit_stream.push(num & 0b0001 != 0);
+            bit_stream
+        });
+
+
+    let (packages, _) = parse_package(&bit_stream, None);
+    println!("\n\n{:?}", packages);
+
+
+    fn execute_operations(ps: Vec<Package>, op: u64) -> u64 {
+        // ID 0  sum packets          - the sum of the values of their sub-packets. If they only have a single sub-packet, their value is the value of the sub-packet.
+        // ID 1  product packets      - the result of multiplying together the values of their sub-packets. If they only have a single sub-packet, their value is the value of the sub-packet.
+        // ID 2  minimum packets      - the minimum of the values of their sub-packets.
+        // ID 3  maximum packets      - the maximum of the values of their sub-packets.
+        // ID 5  greater than packets - 1 if the value of the first sub-packet is greater than the value of the second sub-packet; otherwise, their value is 0.
+        // ID 6  less than packets    - 1 if the value of the first sub-packet is less than the value of the second sub-packet; otherwise, their value is 0.
+        // ID 7  equal to packets     - 1 if the value of the first sub-packet is equal to the value of the second sub-packet; otherwise, their value is 0.
+
+        println!("{}, {:?}", op, ps);
+        match op {
+            0 => // sum
+                ps.iter()
+                    .fold(0u64, |v, p|
+                        if let Some(sub_packets) = p.content.sub_packets.clone() {
+                            v + execute_operations(sub_packets, p.packet_type)
+                        } else {
+                            v + p.content.number.unwrap()
+                        }),
+            1 => // product
+                ps.iter()
+                    .fold(1u64, |v, p|
+                        if let Some(sub_packets) = p.content.sub_packets.clone() {
+                            v * execute_operations(sub_packets, p.packet_type)
+                        } else {
+                            v * p.content.number.unwrap()
+                        }),
+            2 => // minimum
+                ps.iter()
+                    .fold(u64::MAX, |v, p|
+                        if let Some(sub_packets) = p.content.sub_packets.clone() {
+                            v.min(execute_operations(sub_packets, p.packet_type))
+                        } else {
+                            v.min(p.content.number.unwrap())
+                        }),
+            3 => // maximum
+                ps.iter()
+                    .fold(0u64, |v, p|
+                        if let Some(sub_packets) = p.content.sub_packets.clone() {
+                            v.max(execute_operations(sub_packets, p.packet_type))
+                        } else {
+                            v.max(p.content.number.unwrap())
+                        }),
+
+            v => // comparison
+                {
+                    let val0 =
+                        if let Some(sub_packets) = ps[0].content.sub_packets.clone() {
+                            execute_operations(sub_packets, ps[0].packet_type)
+                        } else {
+                            ps[0].content.number.unwrap()
+                        };
+                    let val1 =
+                        if let Some(sub_packets) = ps[1].content.sub_packets.clone() {
+                            execute_operations(sub_packets, ps[1].packet_type)
+                        } else {
+                            ps[1].content.number.unwrap()
+                        };
+
+                    match v {
+                        5 => // greater than
+                            (val0 > val1) as u64,
+                        6 => // smaller than
+                            (val0 < val1) as u64,
+                        7 => // equal to
+                            (val0 == val1) as u64,
+                        _ => { panic!("version is {}", v) }
+                    }
+                }
+        }
+    }
+
+    execute_operations(packages, 0)
 }

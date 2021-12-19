@@ -79,6 +79,5 @@ fn main() {
 
     println!("==== DAY16 ====");
     println!("Solution Part One\t    {}", day16::part_one("input/day16.txt"));
-    // println!("Solution Part One\t    {}", day16::part_one("input/day16.txt"));
-    // println!("Solution Part Two\t    {}", day16::part_two("input/day16.txt"));
+    println!("Solution Part Two\t    {}", day16::part_two("input/day16.txt"));
 }
